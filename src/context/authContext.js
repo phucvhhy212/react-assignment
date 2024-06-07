@@ -10,7 +10,6 @@ const AuthContext = createContext({
 export const useAuthContext = () => useContext(AuthContext)
 const AuthProvider = (props) => {
     const token = localStorage.getItem("token")
-    console.log(token);
 
     const [isAuthenticated,setIsAuthenticated] = useState(!!token)
     const [user,setUser] = useState({name:'',id:''})

@@ -18,7 +18,7 @@ export default function Footer() {
             </Typography>
             <Typography variant="body2" mb={2}>
               <Email sx={{ mr: 1, color: '#FFD333' }} />
-              tuannd@gmail.com
+              phucvh@gmail.com
             </Typography>
             <Typography variant="body2" mb={0}>
               <Phone sx={{ mr: 1, color: '#FFD333' }} />

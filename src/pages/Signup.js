@@ -4,41 +4,35 @@ import { TextField, Button, Box, Container, Typography, Grid, Link } from '@mui/
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import LockIcon from '@mui/icons-material/Lock';
-import { login } from '../services/authenticateService';
+import { login, register } from '../services/authenticateService';
 import { useNavigate } from "react-router-dom"
-import { useAuthContext } from "../context/authContext";
-import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
 
-export default function Login() {
+export default function Signup() {
     const navigate = useNavigate();
-    const {setIsAuthenticated, setUser } = useAuthContext()
 
     const formik = useFormik({
         initialValues: {
+            userName: '',
             email: '',
             password: '',
         },
         validationSchema: Yup.object({
             email: Yup.string().min(8, 'Email must be at least 8 characters').email('Invalid email address').required('Required'),
+            userName: Yup.string().min(4, 'Username must be at least 4 characters').required('Required'),
             password: Yup.string().min(8, 'Password must be at least 8 characters').required('Required'),
         }),
         onSubmit: (values) => {
-            login(values.email, values.password)
+            register(values.userName,values.email, values.password)
                 .then(response => {
                     if (response.data.statusCode === 200) {
-                        localStorage.setItem("token", response.data.body)
-                        const decodedToken = jwtDecode(response.data.body);
-                        setIsAuthenticated(true);
-                        setUser({ name: decodedToken.email, id: decodedToken.userId })
-                        toast.success('Login successfully!');
-                        navigate("/")
+                        toast.success("Register successfully")
                     }
                     else {
-                        toast.error('Login failed');
+                        toast.error(response.data.message);
                     }
                 })
-                .catch(e => toast.error('Login failed'))
+                .catch(e => {console.log(e); toast.error('Register failed')})
         },
     });
 
@@ -58,6 +52,18 @@ export default function Login() {
                     <Typography component="h1" variant="h5" align='center'>
                         Sign in
                     </Typography>
+                    <TextField
+                        sx={{ width: '50%', margin: 'auto' }}
+                        fullWidth
+                        id="userName"
+                        name="userName"
+                        label="UserName"
+                        value={formik.values.userName}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.userName && Boolean(formik.errors.userName)}
+                        helperText={formik.touched.userName && formik.errors.userName}
+                    />
                     <TextField
                         sx={{ width: '50%', margin: 'auto' }}
                         fullWidth
@@ -89,7 +95,7 @@ export default function Login() {
                         fullWidth
                         type="submit"
                     >
-                        Login
+                        Sign Up
                     </Button>
                     <Grid sx={{ width: '50%', margin: 'auto' }} container>
                         <Grid item xs>
@@ -98,8 +104,8 @@ export default function Login() {
                             </Link>
                         </Grid>
                         <Grid item>
-                            <Link href="/signup" variant="body2">
-                                {"Don't have an account? Sign Up"}
+                            <Link href="/Login" variant="body2">
+                                {"Already have an account? Log In"}
                             </Link>
                         </Grid>
                     </Grid>

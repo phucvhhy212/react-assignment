@@ -1,50 +1,69 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Grid, Breadcrumbs, Link, Typography, Button, Box, Paper, Tabs, Tab, Rating } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import Layout from '../components/Layout';
 import { useParams } from "react-router-dom"
+import { getBookDetail } from '../services/bookService';
+import { toast } from 'react-toastify';
+import { createUserRequest } from '../services/userRequestService';
+import { useCountBookInRequestContext } from '../context/countBookInRequestContext';
+import { jwtDecode } from 'jwt-decode';
 
-const BookDetail = () => {
-    var a  = useParams()
-    console.log(a.id);
-    const book = {
-        title: 'Dance With The Devils',
-        introduction: 'This is the intro',
-        publisher: 'This is the publisher',
-        publicationDate: '11/11/2023',
-        bookId: 1,
-        description: 'This is the description'
+const BookDetailBackground = () => {
+    const params = useParams()
+    const { requestCount, setRequestCount } = useCountBookInRequestContext()
+    const [book, setBook] = useState({})
+    useEffect(() => {
+        getBookDetail(params.id)
+            .then(res => setBook(res.data.body))
+            .catch(e => toast.error("Server error"))
+    }, [])
+    const handleAddToUserRequest = () => {
+        if (requestCount === 5){
+            toast.error("Maximum 5 books per request!")
+        }
+        else{
+            const params = { bookId: book.id }
+            createUserRequest(params).then(res => {
+                if (res.data.statusCode === 200) {
+                    toast.success("Added to your request!")
+                    setRequestCount(requestCount + 1)
+                }
+                else {
+                    toast.error(res.data.message)
+                }
+            }).catch(e => {console.log(e); toast.error("Server error")})
+        }
     }
     return (
-        <Layout>
-            <Container sx={{ paddingBottom: 5 }}>
-                <Box sx={{ marginBottom: 3 }}>
-                    <Breadcrumbs aria-label="breadcrumb" sx={{ backgroundColor: 'white', padding: 1 }}>
-                        <Link underline="hover" color="inherit" href="#">
-                            Home
-                        </Link>
-                        <Link underline="hover" color="inherit" href="#">
-                            Book
-                        </Link>
-                        <Typography color="textPrimary">Book Detail</Typography>
-                    </Breadcrumbs>
-                </Box>
+        <Container sx={{ paddingBottom: 5 }}>
+            <Box sx={{ marginBottom: 3 }}>
+                <Breadcrumbs aria-label="breadcrumb" sx={{ backgroundColor: 'white', padding: 1 }}>
+                    <Link underline="hover" color="inherit" href="/">
+                        Home
+                    </Link>
+                    <Link underline="hover" color="inherit" href="/books">
+                        Book
+                    </Link>
+                    <Typography color="textPrimary">Book Detail</Typography>
+                </Breadcrumbs>
+            </Box>
 
-                <Grid container spacing={5}>
-                    <Grid item lg={5} xs={12} sx={{ marginBottom: 3 }}>
-                        <Box
-                            component="img"
-                            sx={{ width: '100%', height: 'auto', backgroundColor: 'white' }}
-                            src={'https://nash-book.s3.ap-southeast-1.amazonaws.com/action.PNG'}
-                            alt="Book Image"
-                        />
-                    </Grid>
+            <Grid container spacing={5}>
+                <Grid item lg={5} xs={12} sx={{ marginBottom: 3 }}>
+                    <Box
+                        component="img"
+                        sx={{ width: '100%', height: 'auto', backgroundColor: 'white' }}
+                        src={book?.image}
+                        alt="Book Image"
+                    />
+                </Grid>
 
-                    <Grid item lg={7} xs={12} sx={{ marginBottom: 3 }}>
-                        <Box sx={{ height: '100%', backgroundColor: 'white'}}>
-                            <Box sx={{p:3}}>
+                <Grid item lg={7} xs={12} sx={{ marginBottom: 3 }}>
+                    <Box sx={{ height: '100%', backgroundColor: 'white' }}>
+                        <Box sx={{ p: 3 }}>
                             <Typography variant="h4" gutterBottom>
-                                {book?.title}
+                                {book?.name}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
                                 <Box sx={{ display: 'flex', color: 'primary.main', marginRight: 1 }}>
@@ -59,57 +78,48 @@ const BookDetail = () => {
                                 <strong>Publisher:</strong> {book?.publisher}
                             </Typography>
                             <Typography variant="body1" paragraph>
-                                <strong>Publication Date:</strong> {book?.publicationDate}
+                                <strong>Publication Date:</strong> {book?.publicationDate?.slice(0, 10)}
                             </Typography>
 
                             <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
-                                {/* <Typography variant="body1" sx={{ marginRight: 2 }}>
-                                    <strong>Quantity:</strong>
-                                </Typography>
-                                <TextField
-                                    type="number"
-                                    defaultValue={1}
-                                    inputProps={{ min: 1 }}
-                                    sx={{ width: '130px', marginRight: 2 }}
-                                /> */}
-                                {/* <Button
-                                    variant="contained"
-                                    sx={{backgroundColor: "#ffc800", color: '#3D464D'}}
-                                    startIcon={<ShoppingCartIcon />}
-                                    href={`/Cart/AddCart?bookId=${book?.bookId}`}
-                                >
-                                    Add To Cart
-                                </Button> */}
-                                <Button variant="contained" startIcon={<FavoriteBorderIcon />} sx={{backgroundColor: "#ffc800", color: '#3D464D', textTransform: 'unset'}}>
+                                {localStorage.getItem("token") && jwtDecode(localStorage.getItem("token")).role==="User" && <Button variant="contained" startIcon={<FavoriteBorderIcon />} sx={{ backgroundColor: "#ffc800", color: '#3D464D', textTransform: 'unset' }} onClick={() => handleAddToUserRequest(book.id)}>
                                     Add To Reservations List
-                                </Button>
-                            </Box>
+                                </Button>}
                             </Box>
                         </Box>
-                    </Grid>
+                    </Box>
                 </Grid>
-                <Grid container spacing={5}>
-                    <Grid item xs={12}>
-                        <Paper sx={{ backgroundColor: 'white', padding: 3 }}>
-                            <Tabs
-                                textColor="primary"
-                                indicatorColor="primary"            
-                                sx={{ marginBottom: 1 }}
-                            >
-                                <Tab label="Description" padding={0} />
-                            </Tabs>
-                            <Box>
-                                <Typography variant="h4" gutterBottom>
-                                    Book Description
-                                </Typography>
-                                <Typography variant="body1">
-                                    {book?.description}
-                                </Typography>
-                            </Box>
-                        </Paper>
-                    </Grid>
+            </Grid>
+            <Grid container spacing={5}>
+                <Grid item xs={12}>
+                    <Paper sx={{ backgroundColor: 'white', padding: 3 }}>
+                        <Tabs
+                            textColor="primary"
+                            indicatorColor="primary"
+                            sx={{ marginBottom: 1 }}
+                        >
+                            <Tab label="Description" padding={0} />
+                        </Tabs>
+                        <Box>
+                            <Typography variant="h4" gutterBottom>
+                                Book Description
+                            </Typography>
+                            <Typography variant="body1">
+                                {book?.description}
+                            </Typography>
+                        </Box>
+                    </Paper>
                 </Grid>
-            </Container>
+            </Grid>
+        </Container>
+    )
+}
+
+const BookDetail = () => {
+
+    return (
+        <Layout>
+            <BookDetailBackground></BookDetailBackground>
         </Layout>
     );
 };
